@@ -1,0 +1,56 @@
+from keras import backend as K
+from keras.layers import Input, Conv2D, MaxPooling2D, Activation, concatenate, Dropout, warnings
+from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D
+from keras.models import Model
+from keras.engine.topology import get_source_inputs
+from keras.utils import get_file
+from keras.utils import layer_utils
+
+def fire_module(X, squeeze=16, expand=64):
+
+    X = Conv2D(squeeze, (1, 1), padding='valid')(X)
+    X = Activation('relu')(X)
+
+    left = Conv2D(expand, (1, 1), padding='valid')(X)
+    left = Activation('relu')(left)
+
+    right = Conv2D(expand, (3, 3), padding='same')(X)
+    right = Activation('relu')(right)
+
+    X = concatenate([left, right], axis=3)
+    return X
+
+
+def SqueezeNet(input_shape=(227, 227, 3)):
+    X_input = Input(input_shape)
+
+    X = Conv2D(64, (3, 3), strides=(2, 2), padding='valid')(X_input)
+    X = Activation('relu')(X)
+    X = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(X)
+
+    X = fire_module(X, squeeze=16, expand=64)
+    X = fire_module(X, squeeze=16, expand=64)
+    X = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(X)
+
+    X = fire_module(X, squeeze=32, expand=128)
+    X = fire_module(X, squeeze=32, expand=128)
+    X = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(X)
+
+    X = fire_module(X, squeeze=48, expand=192)
+    X = fire_module(X, squeeze=48, expand=192)
+    X = fire_module(X, squeeze=64, expand=256)
+    X = fire_module(X, squeeze=64, expand=256)
+    
+    X = Dropout(0.5)(X)
+
+    X = Conv2D(2, (1, 1), padding='valid')(X)
+    X = Activation('relu')(X)
+    X = GlobalAveragePooling2D()(X)
+    X = Activation('softmax')(X)
+
+    model = Model(X_input, X, name='squeezenet')
+
+    return model
+
+model = SqueezeNet()
+model.summary()
