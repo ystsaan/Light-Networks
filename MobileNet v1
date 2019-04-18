@@ -1,0 +1,85 @@
+from keras import backend as K
+from keras.layers import Input, Conv2D, DepthwiseConv2D, GlobalAveragePooling2D, Dense, BatchNormalization, Activation
+from keras.models import Model
+import tensorflow as tf
+
+def MobileNet(input_shape = (299,299,3), alpha=1, shallow=True):
+    X_input = Input(input_shape)
+    X = Conv2D(int(32 * alpha), (3, 3), strides=(2, 2), padding='same', use_bias=False)(X_input)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    X = SeparableConv2D(int(32 * alpha), (3, 3), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+    X = Conv2D(int(64 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    X = SeparableConv2D(int(64 * alpha), (3, 3), strides=(2, 2), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+    X = Conv2D(int(128 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    X = SeparableConv2D(int(128 * alpha), (3, 3), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+    X = Conv2D(int(128 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    X = SeparableConv2D(int(128 * alpha), (3, 3), strides=(2, 2), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+    X = Conv2D(int(256 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    X = SeparableConv2D(int(256 * alpha), (3, 3), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+    X = Conv2D(int(256 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    X = SeparableConv2D(int(256 * alpha), (3, 3), strides=(2, 2), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+    X = Conv2D(int(512 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    if not shallow:
+        for _ in range(5):
+            X = SeparableConv2D(int(512 * alpha), (3, 3), strides=(1, 1), padding='same', use_bias=False)(X)
+            X = BatchNormalization(axis = 3)(X)
+            X = Activation('relu')(X)
+            X = Conv2D(int(512 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+            X = BatchNormalization(axis = 3)(X)
+            X = Activation('relu')(X)
+
+    X = SeparableConv2D(int(512 * alpha), (3, 3), strides=(2, 2), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+    X = Conv2D(int(1024 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    X = SeparableConv2D(int(1024 * alpha), (3, 3), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+    X = Conv2D(int(1024 * alpha), (1, 1), strides=(1, 1), padding='same', use_bias=False)(X)
+    X = BatchNormalization(axis = 3)(X)
+    X = Activation('relu')(X)
+
+    X = GlobalAveragePooling2D()(X)
+    X = Dense(2, activation='softmax')(X)
+
+    model = Model(X_input, X, name='mobilenet')
+
+    return model
+    
+model = MobileNet()
+model.summary()
